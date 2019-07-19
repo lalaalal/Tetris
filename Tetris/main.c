@@ -17,7 +17,7 @@
 
 #define NUM_ROTATE	4
 #define NUM_TILE	4
-
+ 
 typedef char Board[NUM_COL][NUM_ROW];
 
 typedef struct { 
@@ -116,13 +116,13 @@ int main(int argc, char* argv[]) {
 
 	srand((unsigned int)time(NULL));
 	do {
+		checkLine(board);
+		displayBoard(board);
+
 		curr = next;
 		displayNextBlock(next, ERASE);
 		next = newBlock();
 		displayNextBlock(next, DRAW);
-
-		checkLine(board);
-		displayBoard(board);
 
 		if (hold.blockNum == -2)
 			hold.blockNum = -1;
@@ -156,6 +156,7 @@ Block newBlock() {
 }
 
 void init() {
+	system("cls");
 	hideCursor();
 	setFontColor(GRAY);
 
@@ -184,7 +185,9 @@ void displayGuid() {
 	gotoxy(NUM_ROW + 4, 20);
 	printf("H : Hold");
 	gotoxy(NUM_ROW + 4, 22);
-	printf("Run in Legacy Mode or PowerShell");
+	setFontColor(RED);
+	printf("Run in Legacy Terminal or PowerShell");
+	setFontColor(WHITE);
 	gotoxy(NUM_ROW + 4, 24);
 	printf("By Ã¢Çù");
 }
@@ -426,7 +429,7 @@ void removeLineAnimation(const Board board, int * cols, int numCol) {
 			else
 				displayLine(board, y, "  ");
 		}
-		Sleep(150);
+		Sleep(200);
 	}
 }
 
