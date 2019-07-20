@@ -4,6 +4,9 @@ void play() {
 	init();
 	Board board = { 0, };
 
+	int level = 1;
+	int score = 0;
+
 	Block curr;
 	Block next = newBlock();
 	Block hold;
@@ -11,7 +14,7 @@ void play() {
 
 	srand((unsigned int)time(NULL));
 	do {
-		checkLine(board);
+		checkLine(board, &score, &level);
 		displayBoard(board);
 
 		curr = next;
@@ -21,7 +24,7 @@ void play() {
 
 		if (getHoldStat(hold) == HOLDED)
 			setHoldStat(&hold, NOT_HOLDING);
-	} while (dropBlock(board, curr, &hold) == PLAYING);
+	} while (dropBlock(board, curr, &hold, level) == PLAYING);
 }
 
 Block newBlock() {
@@ -35,6 +38,8 @@ Block newBlock() {
 	return new;
 }
 
+
+// init and display
 void init() {
 	system("cls");
 	hideCursor();
@@ -59,10 +64,12 @@ void displayGuid() {
 	printxy(offset.x, offset.y + 18, "  ¡ä    : Move");
 	printxy(offset.x, offset.y + 19, "P : Hard Down");
 	printxy(offset.x, offset.y + 20, "H : Hold");
+	printxy(offset.x, offset.y + 22, "Level : 1");
+	printxy(offset.x, offset.y + 23, "Score : 0");
 	setFontColor(RED);
-	printxy(offset.x, offset.y + 22, "Run in Legacy Terminal or PowerShell");
+	printxy(offset.x, offset.y + 25, "Run in Legacy Terminal or PowerShell");
 	setFontColor(WHITE);
-	printxy(offset.x, offset.y + 24, "By Ã¢Çù");
+	printxy(offset.x, offset.y + 26, "By Ã¢Çù");
 }
 
 void drawOutLine(int width, int height, Pos offset) {
@@ -95,8 +102,7 @@ void displayBoard(const Board board) {
 	}
 }
 
-void displayBlock(Block block, int blockType) {
-	Pos offset = { BOARD_OFFSET.x + 1, BOARD_OFFSET.y + 1 };
+void displayBlock(Block block, int blockType, Pos offset) {
 	Pos pos = block.pos;
 	int blockNum = block.blockNum;
 	int rotate = block.rotate;
@@ -116,11 +122,13 @@ void displayBlock(Block block, int blockType) {
 }
 
 void displayNextBlock(Block next, int blockType) {
-	next.pos.x = NEXT_OFFSET.x + 2;
-	next.pos.y = NEXT_OFFSET.y + 1;
-	displayBlock(next, blockType);
+	next.pos.x = 3;
+	next.pos.y = 2;
+	displayBlock(next, blockType, NEXT_OFFSET);
 }
 
+
+//Moving Block
 bool setBlock(Board board, Block block, int value) {
 	Pos pos = block.pos;
 	int blockNum = block.blockNum;
@@ -149,14 +157,14 @@ bool moveBlock(Board board, Block* block, int key) {
 	else return false;
 
 	setBlock(board, *block, ERASE);
-	displayBlock(*block, ERASE);
+	displayBlock(*block, ERASE, INBOARD_OFFSET);
 	block->pos.x += xMove;
 	block->pos.y += yMove;
 	if (!setBlock(board, *block, TEST)) {
 		block->pos.x -= xMove;
 		block->pos.y -= yMove;
 		setBlock(board, *block, DRAW);
-		displayBlock(*block, DRAW);
+		displayBlock(*block, DRAW, INBOARD_OFFSET);
 
 		return false;
 	}
@@ -167,7 +175,7 @@ bool moveBlock(Board board, Block* block, int key) {
 
 bool rotateBlock(Board board, Block* block) {
 	setBlock(board, *block, ERASE);
-	displayBlock(*block, ERASE);
+	displayBlock(*block, ERASE, INBOARD_OFFSET);
 	block->rotate++;
 	block->rotate %= 4;
 
@@ -175,14 +183,63 @@ bool rotateBlock(Board board, Block* block) {
 		block->rotate--;
 		block->rotate %= 4;
 		setBlock(board, *block, DRAW);
-		displayBlock(*block, DRAW);
+		displayBlock(*block, DRAW, INBOARD_OFFSET);
 
 		return false;
 	}
 	setBlock(board, *block, DRAW);
-	displayBlock(*block, DRAW);
+	displayBlock(*block, DRAW, INBOARD_OFFSET);
 
 	return true;
+}
+
+void hardDown(Board board, Block* block, int blockType) {
+	Block tmp = *block;
+
+	setBlock(board, *block, ERASE);
+	displayBlock(*block, ERASE, INBOARD_OFFSET);
+	while (setBlock(board, *block, TEST))
+		block->pos.y++;
+
+	block->pos.y--;
+	setBlock(board, *block, blockType);
+	displayBlock(*block, blockType, INBOARD_OFFSET);
+	if (blockType == SHADOW)
+		setBlock(board, tmp, DRAW);
+}
+
+void refreshShadow(Board board, Block* block, Block* shadow) {
+	setBlock(board, *shadow, ERASE);
+	displayBlock(*shadow, ERASE, INBOARD_OFFSET);
+	*shadow = *block;
+	hardDown(board, shadow, SHADOW);
+	displayBlock(*block, DRAW, INBOARD_OFFSET);
+}
+
+
+// Holding Block 
+void holdBlock(Board board, Block block, Block* hold) {
+	setBlock(board, block, ERASE);
+	displayBlock(block, ERASE, INBOARD_OFFSET);
+	*hold = block;
+	displayHold(hold, DRAW);
+}
+
+void getBlock(Board board, Block* block, Block* hold) {
+	Pos curPos = block->pos;
+
+	setBlock(board, *block, ERASE);
+	displayBlock(*block, ERASE, INBOARD_OFFSET);
+	*block = *hold;
+	block->pos = curPos;
+	displayHold(hold, ERASE);
+	hold->blockNum = -2;
+}
+
+void displayHold(Block* hold, int blockType) {	
+	hold->pos.x = 3;
+	hold->pos.y = 2;
+	displayBlock(*hold, blockType, HOLD_OFFSET);
 }
 
 void setHoldStat(Block* hold, int stat) {
@@ -193,54 +250,8 @@ int getHoldStat(Block hold) {
 	return hold.blockNum;
 }
 
-void hardDown(Board board, Block* block, int blockType) {
-	Block tmp = *block;
-
-	setBlock(board, *block, ERASE);
-	displayBlock(*block, ERASE);
-	while (setBlock(board, *block, TEST))
-		block->pos.y++;
-
-	block->pos.y--;
-	setBlock(board, *block, blockType);
-	displayBlock(*block, blockType);
-	if (blockType == SHADOW)
-		setBlock(board, tmp, DRAW);
-}
-
-void refreshShadow(Board board, Block* block, Block* shadow) {
-	setBlock(board, *shadow, ERASE);
-	displayBlock(*shadow, ERASE);
-	*shadow = *block;
-	hardDown(board, shadow, SHADOW);
-	displayBlock(*block, DRAW);
-}
-
-void holdBlock(Board board, Block block, Block* hold) {
-	setBlock(board, block, ERASE);
-	displayBlock(block, ERASE);
-	*hold = block;
-	displayHold(hold, DRAW);
-}
-
-void getBlock(Board board, Block* block, Block* hold) {
-	Pos curPos = block->pos;
-
-	setBlock(board, *block, ERASE);
-	displayBlock(*block, ERASE);
-	*block = *hold;
-	block->pos = curPos;
-	displayHold(hold, ERASE);
-	hold->blockNum = -2;
-}
-
-void displayHold(Block* hold, int blockType) {
-	Pos offset = { HOLD_OFFSET.x + 2, HOLD_OFFSET.y + 1 };
-	hold->pos = offset;
-	displayBlock(*hold, blockType);
-}
-
-int dropBlock(Board board, Block block, Block* hold) {
+// Game Process
+int dropBlock(Board board, Block block, Block* hold, int level) {
 	if (!setBlock(board, block, DRAW))
 		return GAME_OVER;
 
@@ -248,8 +259,9 @@ int dropBlock(Board board, Block block, Block* hold) {
 	refreshShadow(board, &block, &shadow);
 
 	do {
-		displayBlock(block, DRAW);
-		for (int i = 0; i < 100; i++) {
+		displayBlock(block, DRAW, INBOARD_OFFSET);
+		int speed = 100 - (level - 1) * 4;
+		for (int i = 0; i < speed; i++) {
 			Sleep(5);
 			int key = keyboard();
 
@@ -287,7 +299,6 @@ int dropBlock(Board board, Block block, Block* hold) {
 	} while (moveBlock(board, &block, DOWN));
 	return PLAYING;
 }
-
 
 void displayLine(const Board board, int col, const char* block) {
 	Pos offset = { BOARD_OFFSET.x + 1, BOARD_OFFSET.y + 1 };
@@ -327,7 +338,7 @@ void removeLine(Board board, int* cols, int numCol) {
 	}
 }
 
-void checkLine(Board board) {
+void checkLine(Board board, int* score, int *level) {
 	int removeCols[4] = { 0, };
 	int lineCount = 0;
 	for (int y = NUM_COL - 1; y > 1; y--) {
@@ -338,7 +349,21 @@ void checkLine(Board board) {
 				removeCols[lineCount++] = y;
 		}
 	}
+	manageGameData(level, score, lineCount);
 	removeLine(board, removeCols, lineCount);
 	if (lineCount != 0)
 		removeLineAnimation(board, removeCols, lineCount);
+}
+
+void manageGameData(int* level, int *score, int lineCount) {
+	Pos offset = { NUM_ROW + 4 + BOARD_OFFSET.x, BOARD_OFFSET.y };
+	
+	*score += (10 + *level) * lineCount * lineCount;
+	if ((*level * *level) <= *score / 40)
+		(*level) += 1;
+
+	printxy(offset.x, offset.y + 22, "Level : ");
+	printf("%d", *level);
+	printxy(offset.x, offset.y + 23, "Score : ");
+	printf("%d", *score);
 }

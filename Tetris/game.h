@@ -14,6 +14,9 @@
 #define NUM_ROTATE	4
 #define NUM_TILE	4
 
+#define BOARD_X 1
+#define BOARD_Y 1
+
 typedef char Board[NUM_COL][NUM_ROW];
 
 typedef struct {
@@ -22,9 +25,10 @@ typedef struct {
 	int rotate;
 } Block;
 
-static const Pos BOARD_OFFSET = { 1, 1 };
-static const Pos NEXT_OFFSET = { NUM_ROW + 5, 1 };
-static const Pos HOLD_OFFSET = { NUM_ROW + 5, 9 };
+static const Pos BOARD_OFFSET = { BOARD_X, BOARD_Y };
+static const Pos INBOARD_OFFSET = { BOARD_X + 1, BOARD_Y + 1 };
+static const Pos NEXT_OFFSET = { BOARD_X + NUM_ROW + 4, 2 };
+static const Pos HOLD_OFFSET = { BOARD_X + NUM_ROW + 4, 10 };
 
 static const Pos BLOCK[][NUM_ROTATE][NUM_TILE] = {
 	{
@@ -80,28 +84,34 @@ void play();
 
 Block newBlock();
 
+// init and display
 void init();
 void displayGuid();
 void drawOutLine(int width, int height, Pos offset);
 void displayBoard(const Board board);
-void displayBlock(Block block, int blockType);
+void displayBlock(Block block, int blockType, Pos offset);
 void displayNextBlock(Block next, int blockType);
+
+//Moving Block
 bool setBlock(Board board, Block block, int value);
 bool moveBlock(Board board, Block* block, int key);
 bool rotateBlock(Board board, Block* block);
 void hardDown(Board board, Block* block, int blockType);
 void refreshShadow(Board board, Block* block, Block* shadow);
 
+// Holding Block 
 void holdBlock(Board board, Block block, Block* hold);
 void getBlock(Board board, Block* block, Block* hold);
 void displayHold(Block* hold, int blockType);
-
 void setHoldStat(Block* hold, int stat);
 int getHoldStat(Block hold);
 
-int dropBlock(Board board, Block block, Block* hold);
+// Game Process
+int dropBlock(Board board, Block block, Block* hold, int level);
 void displayLine(const Board board, int col, const char* block);
 void pullLine(Board board, int from);
 void removeLineAnimation(const Board board, int* cols, int numCol);
 void removeLine(Board board, int* cols, int numCol);
-void checkLine(Board board);
+void checkLine(Board board, int* score, int *level);
+
+void manageGameData(int* level, int* score, int lineCount);
