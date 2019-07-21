@@ -30,7 +30,7 @@ void play() {
 Block newBlock() {
 	Block new;
 
-	new.pos.x = NUM_ROW / 2;
+	new.pos.x = NUM_ROW / 2 - 1;
 	new.pos.y = 1;
 	new.blockNum = rand() % NUM_BLOCKS;
 	new.rotate = rand() % NUM_ROTATE;
@@ -41,7 +41,7 @@ Block newBlock() {
 
 // init and display
 void init() {
-	system("cls");
+	system(CLEAR_CONSOLE);
 	hideCursor();
 	setFontColor(GRAY);
 
@@ -59,9 +59,9 @@ void displayGuid() {
 	gotoxy(offset.x, offset.y + 8);
 	printf("HOLD");
 
-	printxy(offset.x, offset.y + 16, "  °‚    : Rotate");
-	printxy(offset.x, offset.y + 17, "¢∑  ¢π  : Move");
-	printxy(offset.x, offset.y + 18, "  °‰    : Move");
+	printxy(offset.x, offset.y + 16, "  ‚ñ≥    : Rotate");
+	printxy(offset.x, offset.y + 17, "‚óÅ   ‚ñ∑  : Move");
+	printxy(offset.x, offset.y + 18, "  ‚ñΩ    : Move");
 	printxy(offset.x, offset.y + 19, "P : Hard Down");
 	printxy(offset.x, offset.y + 20, "H : Hold");
 	printxy(offset.x, offset.y + 22, "Level : 1");
@@ -69,23 +69,23 @@ void displayGuid() {
 	setFontColor(RED);
 	printxy(offset.x, offset.y + 25, "Run in Legacy Terminal or PowerShell");
 	setFontColor(WHITE);
-	printxy(offset.x, offset.y + 26, "By √¢«˘");
+	printxy(offset.x, offset.y + 26, "By Ï∞ΩÌòë");
 }
 
 void drawOutLine(int width, int height, Pos offset) {
 	gotoxy(offset.x, offset.y);
 	for (int x = 0; x < width; x++)
-		printf("°·");
+		printf("‚ñ† ");
 	for (int y = 1; y < height - 1; y++) {
 		gotoxy(offset.x, y + offset.y);
-		printf("°·");
+		printf("‚ñ† ");
 		for (int x = 0; x < width - 2; x++)
 			printf("  ");
-		printf("°·\n");
+		printf("‚ñ† \n");
 	}
 	gotoxy(offset.x, offset.y + height - 1);
 	for (int x = 0; x < width; x++)
-		printf("°·");
+		printf("‚ñ† ");
 }
 
 void displayBoard(const Board board) {
@@ -93,9 +93,9 @@ void displayBoard(const Board board) {
 		gotoxy(BOARD_OFFSET.x + 1, y + BOARD_OFFSET.y + 1);
 		for (int x = 0; x < NUM_ROW; x++) {
 			if (board[y][x] == 1)
-				printf("°·");
+				printf("‚ñ† ");
 			else if (board[y][x] == 2)
-				printf("°‡");
+				printf("‚ñ° ");
 			else
 				printf("  ");
 		}
@@ -113,9 +113,9 @@ void displayBlock(Block block, int blockType, Pos offset) {
 
 		gotoxy(x_pos + offset.x, y_pos + offset.y);
 		if (blockType == DRAW)
-			printf("°·");
+			printf("‚ñ† ");
 		else if (blockType == SHADOW)
-			printf("°‡");
+			printf("‚ñ° ");
 		else
 			printf("  ");
 	}
@@ -217,7 +217,7 @@ void refreshShadow(Board board, Block* block, Block* shadow) {
 }
 
 
-// Holding Block 
+// Holding Block
 void holdBlock(Board board, Block block, Block* hold) {
 	setBlock(board, block, ERASE);
 	displayBlock(block, ERASE, INBOARD_OFFSET);
@@ -236,7 +236,7 @@ void getBlock(Board board, Block* block, Block* hold) {
 	hold->blockNum = -2;
 }
 
-void displayHold(Block* hold, int blockType) {	
+void displayHold(Block* hold, int blockType) {
 	hold->pos.x = 3;
 	hold->pos.y = 2;
 	displayBlock(*hold, blockType, HOLD_OFFSET);
@@ -262,7 +262,7 @@ int dropBlock(Board board, Block block, Block* hold, int level) {
 		displayBlock(block, DRAW, INBOARD_OFFSET);
 		int speed = 100 - (level - 1) * 4;
 		for (int i = 0; i < speed; i++) {
-			Sleep(5);
+			sleepMilli(5);
 			int key = keyboard();
 
 			switch (key) {
@@ -300,12 +300,13 @@ int dropBlock(Board board, Block block, Block* hold, int level) {
 	return PLAYING;
 }
 
-void displayLine(const Board board, int col, const char* block) {
+void displayLine(int col, const char* block) {
 	Pos offset = { BOARD_OFFSET.x + 1, BOARD_OFFSET.y + 1 };
 	gotoxy(offset.x, col + offset.y);
 	for (int x = 0; x < NUM_ROW; x++) {
-		printf(block);
+		printf("%s", block);
 	}
+	fflush(stdout);
 }
 
 void pullLine(Board board, int from) {
@@ -315,16 +316,17 @@ void pullLine(Board board, int from) {
 	}
 }
 
-void removeLineAnimation(const Board board, int* cols, int numCol) {
+void removeLineAnimation(int* cols, int numCol) {
 	for (int t = 0; t < 5; t++) {
 		for (int i = 0; i < numCol; i++) {
 			int y = cols[i];
 			if (t % 2 == 0)
-				displayLine(board, y, "°·");
+				displayLine(y, "‚ñ† ");
 			else
-				displayLine(board, y, "  ");
+				displayLine(y, "  ");
 		}
-		Sleep(200);
+		printf("\n");
+		sleepMilli(200);
 	}
 }
 
@@ -350,14 +352,15 @@ void checkLine(Board board, int* score, int *level) {
 		}
 	}
 	manageGameData(level, score, lineCount);
-	removeLine(board, removeCols, lineCount);
-	if (lineCount != 0)
-		removeLineAnimation(board, removeCols, lineCount);
+	if (lineCount != 0) {
+		removeLine(board, removeCols, lineCount);
+		removeLineAnimation(removeCols, lineCount);
+	}
 }
 
 void manageGameData(int* level, int *score, int lineCount) {
 	Pos offset = { NUM_ROW + 4 + BOARD_OFFSET.x, BOARD_OFFSET.y };
-	
+
 	*score += (10 + *level) * lineCount * lineCount;
 	if ((*level * *level) <= *score / 40)
 		(*level) += 1;

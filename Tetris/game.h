@@ -99,7 +99,7 @@ bool rotateBlock(Board board, Block* block);
 void hardDown(Board board, Block* block, int blockType);
 void refreshShadow(Board board, Block* block, Block* shadow);
 
-// Holding Block 
+// Holding Block
 void holdBlock(Board board, Block block, Block* hold);
 void getBlock(Board board, Block* block, Block* hold);
 void displayHold(Block* hold, int blockType);
@@ -108,9 +108,9 @@ int getHoldStat(Block hold);
 
 // Game Process
 int dropBlock(Board board, Block block, Block* hold, int level);
-void displayLine(const Board board, int col, const char* block);
+void displayLine(int col, const char* block);
 void pullLine(Board board, int from);
-void removeLineAnimation(const Board board, int* cols, int numCol);
+void removeLineAnimation(int* cols, int numCol);
 void removeLine(Board board, int* cols, int numCol);
 void checkLine(Board board, int* score, int *level);
 
