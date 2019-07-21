@@ -14,7 +14,7 @@
 
 #define RED   31
 #define WHITE 1
-#define GRAY  3
+#define GRAY  2
 
 #define CLEAR_CONSOLE "clear"
 
