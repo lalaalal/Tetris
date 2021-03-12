@@ -10,7 +10,7 @@ void play() {
 	Block curr;
 	Block next = newBlock();
 	Block hold;
-	setHoldStat(&hold, NOT_HOLDING);
+	setHoldState(&hold, NOT_HOLDING);
 
 	srand((unsigned int)time(NULL));
 	do {
@@ -22,8 +22,8 @@ void play() {
 		next = newBlock();
 		displayNextBlock(next, DRAW);
 
-		if (getHoldStat(hold) == HOLDED)
-			setHoldStat(&hold, NOT_HOLDING);
+		if (getHoldState(hold) == HELD)
+			setHoldState(&hold, NOT_HOLDING);
 	} while (dropBlock(board, curr, &hold, level) == PLAYING);
 }
 
@@ -233,7 +233,7 @@ void getBlock(Board board, Block* block, Block* hold) {
 	*block = *hold;
 	block->pos = curPos;
 	displayHold(hold, ERASE);
-	hold->blockNum = -2;
+	setHoldState(hold, HELD);
 }
 
 void displayHold(Block* hold, int blockType) {
@@ -242,11 +242,11 @@ void displayHold(Block* hold, int blockType) {
 	displayBlock(*hold, blockType, HOLD_OFFSET);
 }
 
-void setHoldStat(Block* hold, int stat) {
-	hold->blockNum = stat;
+void setHoldState(Block* hold, int state) {
+	hold->blockNum = state;
 }
 
-int getHoldStat(Block hold) {
+int getHoldState(Block hold) {
 	return hold.blockNum;
 }
 
@@ -281,11 +281,11 @@ int dropBlock(Board board, Block block, Block* hold, int level) {
 				return PLAYING;
 			case 'h':
 			case 'H':
-				if (getHoldStat(*hold) == NOT_HOLDING) {
+				if (getHoldState(*hold) == NOT_HOLDING) {
 					holdBlock(board, block, hold);
 					setBlock(board, shadow, ERASE);
 					return PLAYING;
-				} if (getHoldStat(*hold) == HOLDED) {
+				} if (getHoldState(*hold) == HELD) {
 					break;
 				}
 				else {

@@ -78,7 +78,7 @@ static const int NUM_BLOCKS = sizeof(BLOCK) / (NUM_ROTATE * NUM_TILE * sizeof(Po
 
 enum { ERASE, DRAW, SHADOW, TEST };
 enum { PLAYING, GAME_OVER };
-enum { NOT_HOLDING = -1, HOLDED = -2, HOLDING };
+enum { NOT_HOLDING = -1, HELD = -2, HOLDING };
 
 void play();
 
@@ -103,8 +103,8 @@ void refreshShadow(Board board, Block* block, Block* shadow);
 void holdBlock(Board board, Block block, Block* hold);
 void getBlock(Board board, Block* block, Block* hold);
 void displayHold(Block* hold, int blockType);
-void setHoldStat(Block* hold, int stat);
-int getHoldStat(Block hold);
+void setHoldState(Block* hold, int state);
+int getHoldState(Block hold);
 
 // Game Process
 int dropBlock(Board board, Block block, Block* hold, int level);
